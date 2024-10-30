@@ -1,0 +1,88 @@
+# Implementation and Verification Status Map
+
+## Core Command Line Features
+| Original Feature          | New Implementation             | Location                          | Status | Verification Notes |
+|--------------------------|--------------------------------|-----------------------------------|---------|-------------------|
+| Database File Selection  | Streamlit UI + Settings        | src/web/pages/1_File_Upload.py   | ✓      | Need to verify database switching works correctly |
+| Test Mode (--test)       | Streamlit UI + API Parameter   | src/web/pages/1_File_Upload.py   | ✓      | Need to verify row limit is enforced |
+| File Pattern Matching    | File Upload Interface          | src/web/pages/1_File_Upload.py   | ✓      | Verify multiple file handling |
+
+## File Processing Components
+| Original Feature          | New Implementation             | Location                          | Status | Verification Notes |
+|--------------------------|--------------------------------|-----------------------------------|---------|-------------------|
+| Assy File Processing     | AssyFileProcessor              | src/processors/assy.py            | ✓      | Verify column mappings |
+| Fabcut File Processing   | FabcutFileProcessor           | src/processors/fabcut.py          | ✓      | Verify column mappings |
+| LP File Processing       | LPFileProcessor               | src/processors/lp.py              | ✓      | Verify column mappings |
+| SEW-DC File Processing   | SEWDCFileProcessor            | src/processors/sewdc.py           | ✓      | Verify column mappings |
+| SEW-FB File Processing   | SEWFBFileProcessor            | src/processors/sewfb.py           | ✓      | Verify column mappings |
+| File Type Detection      | Settings.detect_file_type()    | src/config/settings.py            | ✓      | Verify detection logic |
+
+## Database Operations
+| Original Feature          | New Implementation             | Location                          | Status | Verification Notes |
+|--------------------------|--------------------------------|-----------------------------------|---------|-------------------|
+| Table Creation           | DatabaseConnection             | src/database/connection.py        | ✓      | Verify schema matches |
+| Data Insertion           | FileProcessor._insert_data()   | src/processors/base.py            | ✓      | Verify data integrity |
+| Duplicate Checking       | FileProcessor.row_exists()     | src/processors/base.py            | ✓      | Verify duplicate detection |
+| Connection Management    | Context Managers               | src/database/connection.py        | ✓      | Verify connection cleanup |
+
+## Data Processing Features
+| Original Feature          | New Implementation             | Location                          | Status | Verification Notes |
+|--------------------------|--------------------------------|-----------------------------------|---------|-------------------|
+| Date Parsing             | parse_date()                   | src/utils/date_parser.py          | ✓      | Verify all date formats |
+| Number Conversion        | _convert_to_float()            | src/processors/base.py            | ✓      | Verify accounting notation |
+| Metadata Extraction      | _extract_metadata()            | src/processors/base.py            | ✓      | Verify header parsing |
+| Empty Row Handling       | Row validation in processors    | src/processors/*.py              | ✓      | Verify empty row skipping |
+
+## Error Handling and Logging
+| Original Feature          | New Implementation             | Location                          | Status | Verification Notes |
+|--------------------------|--------------------------------|-----------------------------------|---------|-------------------|
+| File Processing Logs     | Logger in processors           | src/processors/*.py              | ✓      | Compare log outputs |
+| Database Error Logs      | Logger in database             | src/database/connection.py        | ✓      | Verify error capture |
+| Processing Statistics    | Processing summaries           | src/schemas/models.py             | ✓      | Verify stat accuracy |
+
+## New Features (For Verification)
+| Feature                  | Implementation                 | Location                          | Status | Verification Notes |
+|--------------------------|--------------------------------|-----------------------------------|---------|-------------------|
+| Web Interface           | Streamlit pages                | src/web/*                        | ✓      | Test all UI features |
+| API Endpoints           | FastAPI routers                | src/api/routers/*                | ✓      | Test all endpoints |
+| File Upload Progress    | Upload tracking                | src/web/pages/1_File_Upload.py   | ✓      | Verify progress accuracy |
+| Data Browser           | Data filtering and display      | src/web/pages/2_Data_Browser.py  | ✓      | Test all filters |
+| Multi-file Upload      | Batch processing                | src/api/routers/files.py         | ✓      | Test batch uploads |
+
+## Testing Checklist
+1. Database Operations:
+   - [ ] Database creation with custom path
+   - [ ] Table creation with correct schema
+   - [ ] Data insertion with all file types
+   - [ ] Duplicate detection and handling
+   - [ ] Database switching during runtime
+
+2. File Processing:
+   - [ ] File type detection from names
+   - [ ] Test mode row limitation
+   - [ ] Empty row handling
+   - [ ] Column mapping accuracy
+   - [ ] Date parsing for all formats
+   - [ ] Number conversion accuracy
+
+3. User Interface:
+   - [ ] Database configuration
+   - [ ] Test mode configuration
+   - [ ] File upload functionality
+   - [ ] Progress tracking
+   - [ ] Error messaging
+   - [ ] Data browsing and filtering
+
+4. API Endpoints:
+   - [ ] File upload endpoints
+   - [ ] Data retrieval endpoints
+   - [ ] Error handling
+   - [ ] Parameter validation
+
+## Suggested Testing Sequence
+1. Start with database operations verification
+2. Test individual file processors
+3. Verify API endpoints independently
+4. Test web interface functionality
+5. Perform end-to-end testing with real data
+6. Verify error handling and edge cases

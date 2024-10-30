@@ -1,0 +1,265 @@
+# Example 1: Upload a single Assy file
+# Using curl
+```bash
+curl -X POST "http://localhost:8000/api/v1/files/upload/Assy" \
+    -H "accept: application/json" \
+    -H "Content-Type: multipart/form-data" \
+    -F "file=@/path/to/your/assy_file.csv"
+```
+
+# Using Python requests
+```python
+import requests
+
+url = "http://localhost:8000/api/v1/files/upload/Assy"
+files = {"file": open("path/to/your/assy_file.csv", "rb")}
+
+response = requests.post(url, files=files)
+print(response.json())
+```
+
+# Example Response
+```json
+{
+    "file_name": "assy_file.csv",
+    "status": "success",
+    "message": "File processed successfully",
+    "summary": {
+        "file_name": "assy_file.csv",
+        "file_type": "Assy",
+        "total_rows": 150,
+        "successful_rows": 145,
+        "duplicate_rows": 3,
+        "error_rows": 2,
+        "upload_date": "2024-10-30T14:30:25"
+    }
+}
+```
+
+# Example 2: Upload multiple Fabcut files
+# Using curl
+```bash
+curl -X POST "http://localhost:8000/api/v1/files/upload-multiple/Fabcut" \
+    -H "accept: application/json" \
+    -H "Content-Type: multipart/form-data" \
+    -F "files=@fabcut_file1.csv" \
+    -F "files=@fabcut_file2.csv"
+```
+
+# Using Python requests
+```python
+import requests
+
+url = "http://localhost:8000/api/v1/files/upload-multiple/Fabcut"
+files = [
+    ("files", open("fabcut_file1.csv", "rb")),
+    ("files", open("fabcut_file2.csv", "rb"))
+]
+
+response = requests.post(url, files=files)
+print(response.json())
+```
+
+# Example Response
+```json
+[
+    {
+        "file_name": "fabcut_file1.csv",
+        "status": "success",
+        "message": "File processed successfully",
+        "summary": {
+            "file_name": "fabcut_file1.csv",
+            "file_type": "Fabcut",
+            "total_rows": 200,
+            "successful_rows": 198,
+            "duplicate_rows": 2,
+            "error_rows": 0,
+            "upload_date": "2024-10-30T14:30:25"
+        }
+    },
+    {
+        "file_name": "fabcut_file2.csv",
+        "status": "success",
+        "message": "File processed successfully",
+        "summary": {
+            "file_name": "fabcut_file2.csv",
+            "file_type": "Fabcut",
+            "total_rows": 175,
+            "successful_rows": 170,
+            "duplicate_rows": 5,
+            "error_rows": 0,
+            "upload_date": "2024-10-30T14:30:26"
+        }
+    }
+]
+```
+
+# Example 3: Get processed files with date filter
+# Using curl
+```bash
+curl -X GET "http://localhost:8000/api/v1/data/files?file_type=Assy&start_date=2024-10-01&end_date=2024-10-30" \
+    -H "accept: application/json"
+```
+
+# Using Python requests
+```python
+import requests
+from datetime import date
+
+params = {
+    "file_type": "Assy",
+    "start_date": date(2024, 10, 1),
+    "end_date": date(2024, 10, 30)
+}
+
+response = requests.get("http://localhost:8000/api/v1/data/files", params=params)
+print(response.json())
+```
+
+# Example Response
+```json
+[
+    {
+        "file_name": "assy_file_oct30.csv",
+        "file_type": "Assy",
+        "total_rows": 150,
+        "successful_rows": 145,
+        "duplicate_rows": 3,
+        "error_rows": 2,
+        "upload_date": "2024-10-30T14:30:25"
+    },
+    {
+        "file_name": "assy_file_oct15.csv",
+        "file_type": "Assy",
+        "total_rows": 180,
+        "successful_rows": 178,
+        "duplicate_rows": 2,
+        "error_rows": 0,
+        "upload_date": "2024-10-15T09:15:30"
+    }
+]
+```
+
+# Example 4: Get dispatch records with filters
+# Using curl
+```bash
+curl -X GET "http://localhost:8000/api/v1/data/records?file_type=LP&work_cell=CELL01&limit=10" \
+    -H "accept: application/json"
+```
+
+# Using Python requests
+```python
+import requests
+
+params = {
+    "file_type": "LP",
+    "work_cell": "CELL01",
+    "limit": 10
+}
+
+response = requests.get("http://localhost:8000/api/v1/data/records", params=params)
+print(response.json())
+```
+
+# Example Response
+```json
+[
+    {
+        "id": 1234,
+        "file_type": "LP",
+        "work_cell": "CELL01",
+        "job_number": "JOB123",
+        "part_number": "PART456",
+        "comments": "Priority order",
+        "job_qty": 100.0,
+        "bal_qty": 50.0,
+        "code": "CODE1",
+        "prod_date": "2024-10-30",
+        "est_compl_date": null,
+        "and_on": null,
+        "m_pc": 2.5,
+        "prod_hr": 40.0,
+        "report_start_date": "2024-10-30",
+        "report_end_date": "2024-10-30",
+        "report_department": "Production",
+        "report_creation_datetime": "2024-10-30T14:30:25",
+        "upload_date": "2024-10-30T14:30:25",
+        "file_name": "lp_file.csv",
+        "processing_status": "success"
+    }
+    // ... more records ...
+]
+```
+
+# Complete Python Script Example
+```python
+import requests
+from datetime import date
+from pathlib import Path
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class ProductionDataAPI:
+    def __init__(self, base_url: str = "http://localhost:8000/api/v1"):
+        self.base_url = base_url
+
+    def upload_file(self, file_path: Path, file_type: str) -> dict:
+        """Upload a single file."""
+        url = f"{self.base_url}/files/upload/{file_type}"
+        
+        try:
+            with open(file_path, "rb") as f:
+                files = {"file": f}
+                response = requests.post(url, files=files)
+                response.raise_for_status()
+                return response.json()
+        except Exception as e:
+            logger.error(f"Error uploading file {file_path}: {str(e)}")
+            raise
+
+    def get_processed_files(
+        self,
+        file_type: str = None,
+        start_date: date = None,
+        end_date: date = None
+    ) -> list:
+        """Get list of processed files."""
+        url = f"{self.base_url}/data/files"
+        
+        params = {}
+        if file_type:
+            params["file_type"] = file_type
+        if start_date:
+            params["start_date"] = start_date.isoformat()
+        if end_date:
+            params["end_date"] = end_date.isoformat()
+            
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error getting processed files: {str(e)}")
+            raise
+
+# Usage example
+if __name__ == "__main__":
+    api = ProductionDataAPI()
+    
+    # Upload a file
+    result = api.upload_file(
+        Path("path/to/your/assy_file.csv"),
+        "Assy"
+    )
+    logger.info(f"Upload result: {result}")
+    
+    # Get processed files
+    files = api.get_processed_files(
+        file_type="Assy",
+        start_date=date(2024, 10, 1),
+        end_date=date(2024, 10, 30)
+    )
+    logger.info(f"Processed files: {files}")
+```

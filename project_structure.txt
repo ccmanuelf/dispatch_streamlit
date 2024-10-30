@@ -1,0 +1,128 @@
+.
+├── README.md
+├── requirements.txt
+├── src/
+│   ├── __init__.py
+│   ├── config/
+│   │   ├── __init__.py
+│   │   └── settings.py      # Application configuration
+│   ├── database/
+│   │   ├── __init__.py
+│   │   └── connection.py    # Database connection and table definitions
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── main.py         # FastAPI application
+│   │   ├── deps.py         # Dependencies and utilities
+│   │   └── routers/
+│   │       ├── __init__.py
+│   │       ├── files.py    # File upload endpoints
+│   │       └── data.py     # Data retrieval endpoints
+│   ├── processors/
+│   │   ├── __init__.py
+│   │   ├── base.py         # Base file processor
+│   │   ├── assy.py         # Assy file processor
+│   │   ├── fabcut.py       # Fabcut file processor
+│   │   ├── lp.py           # LP file processor
+│   │   ├── sewdc.py        # SEW-DC (Sew Dress-Cover) processor
+│   │   └── sewfb.py        # SEW-FB (Sew Fire-Block) processor
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   └── models.py       # Pydantic models for data validation
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── date_parser.py  # Date parsing utilities
+│   │   └── validators.py   # Data validation utilities
+│   └── web/
+│       ├── __init__.py
+│       ├── Home.py         # Main Streamlit page
+│       └── pages/
+│           ├── 1_File_Upload.py
+│           ├── 2_Data_Browser.py
+│           └── 3_Analytics.py
+└── tests/
+    ├── __init__.py
+    ├── conftest.py         # Test configuration
+    ├── test_api/          # API tests
+    ├── test_processors/   # Processor tests
+    └── test_utils/       # Utility tests
+
+
+[FastAPI Layer]
+src/api/deps.py ------------┐
+                           v
+[Database Layer]    src/database/connection.py
+                           ^
+[Streamlit Layer]          |
+src/web/pages/* -----------┘
+
+The workflow is:
+
+When FastAPI receives a request:
+# In FastAPI endpoint
+@app.get("/data")
+async def get_data(db: Connection = Depends(get_db)):
+    # Here, get_db (from deps.py) uses DatabaseConnection
+    # (from connection.py) to provide the connection
+
+When Streamlit needs database access:
+# In Streamlit page
+from src.database.connection import DatabaseConnection, DatabaseConfig
+
+db = DatabaseConnection(config)
+with db.get_connection() as conn:
+    # Direct use of connection.py
+
+
+Key points about the separation:
+Schemas (src/schemas/models.py):
+# Used for data validation and API interfaces
+class DispatchDataCreate(BaseModel):
+    file_type: FileType
+    work_cell: str
+    # ... other fields
+
+Database (src/database/connection.py):
+y# Handles database operations
+def create_table(conn):
+    sql = """CREATE TABLE IF NOT EXISTS dispatch_data (...)"""
+    conn.execute(sql)
+
+
+This separation follows the principle of separation of concerns:
+Schemas handle data validation and type safety
+Database layer handles persistence and data access
+No duplicate functionality between the two
+
+Key features of the implemented routers:
+
+Files Router (src/api/routers/files.py):
+Single file upload endpoint
+Multiple file upload endpoint
+File type verification
+File size validation
+Temporary file management
+Comprehensive error handling
+
+
+Data Router (src/api/routers/data.py):
+Get processed files with summaries
+Get dispatch records with filtering
+Pagination support
+Multiple filter options
+SQL injection prevention
+
+Common features across both routers:
+Type hints and documentation
+Error handling and logging
+Database connection dependency injection
+Input validation
+Clear response models
+
+The API now provides endpoints for:
+Uploading files:
+POST /api/v1/files/upload/{file_type}
+POST /api/v1/files/upload-multiple/{file_type}
+
+Retrieving data:
+GET /api/v1/data/files
+GET /api/v1/data/records
